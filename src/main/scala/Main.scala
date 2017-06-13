@@ -5,11 +5,13 @@ object Main extends App
 {
   val g = new Garage(true)
 
-  val a = new Car("a", "b", "c", "d", false, 5, true)
-  val b = new Car("e", "f", "g", "h", true, 10, false)
+  val a = new Car("SW08TNO", "Vauxhall", "Agila", "Blue", false, 5, true)
+  val b = new Car("AB238ZL", "Lamborghini", "Murcielago", "Orange", true, 2, false)
+  val c = new Bike("BK01SJV", "Harley-Davidson", "Sportster", "Red", false, 1)
 
   g.addVehicle(a)
   g.addVehicle(b)
+  g.addVehicle(c)
 
   println("Number of cars in the garage: " +  g.vBuff.size)
 
@@ -23,6 +25,14 @@ object Main extends App
 
   println("Number of employees in the company: " + g.eBuff.size)
 
+  g.vFix("a")
+  println("Car of ID 'a' fixed.")
+
+  println("Repairs will cost: £" + f"${g.calcBill("a")}%5.2f")
+
+  println(g.toString)
+
+
   g.removeVehicleByID("a")
   println("Number of cars in garage: " +  g.vBuff.size)
   g.removeVehicleByType("Car")
@@ -34,4 +44,5 @@ object Main extends App
   println(g.getOpen())
   g.gOpen()
   println(g.getOpen())
+
 }

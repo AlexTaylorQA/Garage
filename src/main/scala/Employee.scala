@@ -1,7 +1,7 @@
 /**
   * Created by Administrator on 12/06/2017.
   */
-class Employee(firstName:String, lastName:String, DOB:String, employeeID:String, isManager:Boolean)
+class Employee(var firstName:String, var lastName:String, var DOB:String, var employeeID:String, var isManager:Boolean)
   extends Person(firstName, lastName, DOB)
 {
   var theManager: String = (
