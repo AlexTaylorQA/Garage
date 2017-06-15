@@ -1,8 +1,8 @@
 /**
   * Created by Administrator on 12/06/2017.
   */
-class Bike(reg:String, brand:String, make:String, colour:String, isFixed:Boolean, var numSeats:Int)
-  extends Vehicle(reg, brand, make, colour, isFixed) {
+class Bike(reg:String, brand:String, make:String, colour:String, isFixed:Boolean, costFix:Double, queueCheck:Double, timeTaken:Double, var numSeats:Int)
+  extends Vehicle(reg, brand, make, colour, isFixed, costFix, timeTaken, queueCheck) {
 
   override def toString: String = "%s %s %s %s %s %s"
     .format(
@@ -11,6 +11,7 @@ class Bike(reg:String, brand:String, make:String, colour:String, isFixed:Boolean
       make,
       colour,
       this.checkFix(),
+      costFix.toString,
       numSeats.toString()
     )
 }

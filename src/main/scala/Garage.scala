@@ -6,11 +6,45 @@ class Garage(var isOpen:Boolean)
   var vBuff = scala.collection.mutable.ArrayBuffer.empty[Vehicle]
   var eBuff = scala.collection.mutable.ArrayBuffer.empty[Employee]
 
-  var eList:Array[Employee] = Array.empty
-
   def addVehicle(vIn:Vehicle) =
   {
+    for(x <- 0 to vIn.pBuff.size - 1)
+    {
+      val r = scala.util.Random
+      r.nextInt(2) match
+      {
+        case 0 => vIn.pBuff(x).isBroken = false
+        case 1 => vIn.pBuff(x).isBroken = true
+      }
+
+    }
+
+    // Cost to fix
     vBuff += vIn
+    vBuff(vBuff.size - 1).costFix = calcBill(vBuff(vBuff.size - 1).reg)
+
+    // Time taken
+    vBuff(vBuff.size - 1).timeTaken = {
+      var totalTime:Double = 0.0
+      for(y <- 0 to vBuff(vBuff.size - 1).pBuff.size - 1)
+        {
+          vBuff(vBuff.size - 1).pBuff(y).isBroken == true match
+          {
+            case true => totalTime += vBuff(vBuff.size - 1).pBuff(y).timeTaken
+            case false =>
+          }
+
+        }
+      totalTime
+    }
+
+    // Queue Check
+    {
+      vBuff(vBuff.size - 1).queueCheck = {
+        vBuff(vBuff.size - 1).timeTaken * numBrokenParts(vBuff(vBuff.size - 1).reg)
+      }
+    }
+
   }
 
   def addEmployee(eIn:Employee) =
@@ -72,16 +106,21 @@ class Garage(var isOpen:Boolean)
     theRemove(vType, x, y)
   }
 
-  def vFix(vID:String) =
+  def vFix(vIn:Vehicle) =
   {
+    var theBill:Double = 0.0
     for(x <- 0 to this.vBuff.size - 1)
       {
-        vID.equals(vBuff(x).getReg()) match
+        vIn.reg.equals(vBuff(x).getReg()) match
         {
-          case true => vBuff(x).setFixed()
+          case true =>
+            vBuff(x).setFixed()
+            theBill = calcBill(vIn.reg)
+
           case false =>
         }
       }
+    println("Total cost of repair for vehicle " + vIn.reg + ": £" + (f"${theBill}%.2f"))
 
   }
 
@@ -92,32 +131,87 @@ class Garage(var isOpen:Boolean)
       {
         vID.equals(vBuff(x).getReg()) match
         {
-          case true => vBuff(x).getClass.toString.substring(6) match
-          {
-            case "Car" => theCost += 100.0
-            case "Bike" => theCost += 65.0
-          }
-          case false =>
+          case true =>
+
+              vBuff(x).pBuff.size > 0 match
+              {
+                case true =>
+                  for (y <- 0 to vBuff(x).pBuff.size - 1) {
+                    theCost += vBuff(x).pBuff(y).pCost
+                  }
+
+                case false => theCost += 0.0
+                case _ =>
+              }
+
+            vBuff(x).getClass.toString.substring(6) match
+            {
+             case "Car" => theCost += 100.0
+             case "Bike" => theCost += 65.0
+             case _ =>
+            }
+            case false =>
         }
+
       }
     theCost
+  }
+
+  def numBrokenParts(vID:String): Int = {
+
+    var totalParts:Int = 0
+    for(x <- 0 to this.vBuff.size - 1) {
+      vID.equals(vBuff(x).getReg()) match {
+        case true =>
+
+          vBuff(x).pBuff.size > 0 match {
+            case true =>
+              for (y <- 0 to vBuff(x).pBuff.size - 1) {
+
+                vBuff(x).pBuff(y).isBroken == true match
+                {
+                  case true =>
+                    totalParts += 1
+                  case false =>
+                }
+              }
+
+            case false =>
+            case _ =>
+          }
+        case false =>
+      }
+    }
+    totalParts
   }
 
   def gOpen() =
   {
     isOpen = true
-    getOpen()
+    isOpen
+
+
+    vBuff = vBuff.sortWith(_.queueCheck > _.queueCheck)
+
+    // (numBrokenParts( a.reg ))
+
+
   }
 
   def gClose() =
   {
     isOpen = false
-    getOpen()
+    isOpen
   }
 
-  def getOpen(): Boolean =
+  def timeTakenAll(): Double =
   {
-    isOpen
+    var totalTime:Double = 0.0
+    for(x <- 0 to vBuff.length - 1)
+      {
+        totalTime +=vBuff(x).timeTaken
+      }
+    totalTime
   }
 
   override def toString: String =
@@ -144,6 +238,8 @@ class Garage(var isOpen:Boolean)
             case "Bike" =>
               bikeCount += 1
               str += ("Bike " + bikeCount + ":\n")
+
+            case _ =>
           }
 
           var theFix = ""
@@ -171,17 +267,40 @@ class Garage(var isOpen:Boolean)
               str +=
                   (
                     "Number of Doors: " + vBuff(x).asInstanceOf[Car].numDoors + "\n"
-                  + "Transmission: " + isAuto + "\n\n"
+                  + "Transmission: " + isAuto + "\n"
                   )
             case "Bike" =>
 
               str +=
                 (
-                  "Number of Seats: " + vBuff(x).asInstanceOf[Bike].numSeats + "\n\n"
+                  "Number of Seats: " + vBuff(x).asInstanceOf[Bike].numSeats + "\n"
                   )
 
+            case _ =>
+
           }
+          str += "Parts:\n"
+          vBuff(x).pBuff.size match
+          {
+            case 0 => str += "- None"
+            case _ =>
+
+          for(y <- 0 to vBuff(x).pBuff.size - 1)
+            {
+              str+= "- " + vBuff(x).pBuff(y).pName + " | Cost: £" +
+                (f"${vBuff(x).pBuff(y).pCost}%.2f") +
+                {
+                  vBuff(x).pBuff(y).isBroken match
+                  {
+                    case true => " | Status: Broken\n"
+                    case false => " |  Status: Working\n"
+                  }
+                }
+            }
+          }
+          str += "\n"
         }
+        str += "\n"
     }
 
     str += "--- Employees ---\n\n"
