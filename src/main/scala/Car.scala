@@ -22,7 +22,7 @@ class Car(reg:String, brand:String, make:String, colour:String, isFixed:Boolean,
     automatic
   }
 
-  override def toString: String = "%s %s %s %s %s %s %S %s"
+  override def toString: String = "%s %s %s %s %s %s %s %s %s"
     .format(
       reg,
       brand,
@@ -30,6 +30,7 @@ class Car(reg:String, brand:String, make:String, colour:String, isFixed:Boolean,
       colour,
       this.checkFix(),
       costFix.toString,
+      timeTaken.toString,
       numDoors.toString(),
       this.theAuto
     )

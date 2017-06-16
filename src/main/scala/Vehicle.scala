@@ -34,13 +34,16 @@ abstract class Vehicle(var reg:String, var brand:String, var make:String, var co
 
   }
 
-  override def toString: String = "%s %s %s %s %s"
+  override def toString: String = "%s %s %s %s %s %s %s"
     .format(
         reg,
         brand,
         make,
         colour,
-        checkFix()
+        checkFix(),
+        costFix,
+        timeTaken
+
   )
 }
 
