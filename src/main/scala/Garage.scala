@@ -1,6 +1,11 @@
 /**
   * Created by Administrator on 12/06/2017.
   */
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class Garage(var isOpen:Boolean)
 {
   var vBuff = scala.collection.mutable.ArrayBuffer.empty[Vehicle]
@@ -106,23 +111,117 @@ class Garage(var isOpen:Boolean)
     theRemove(vType, x, y)
   }
 
-  def vFix(vIn:Vehicle) =
+  ////////// VEHICLE FIX FUTURES GOES HERE //////////
+  def vFix(index:Int):Unit =
   {
-    var theBill:Double = 0.0
-    for(x <- 0 to this.vBuff.size - 1)
-      {
-        vIn.reg.equals(vBuff(x).getReg()) match
-        {
-          case true =>
-            vBuff(x).setFixed()
-            theBill = calcBill(vIn.reg)
+    // Copies index (current vehicle) to a new variable so it can be incremented.
+      var theIndex = index
 
-          case false =>
-        }
+    // Check if index equals the size of the garage's vehicle list.
+      theIndex == vBuff.size match
+      {
+        case true => // If true, you've reached the end of the vehicle list.
+        case false => // If false, start/continue the loop.
+
+          /* Causes the employee availability check to loop through all employees
+             repeatedly until the switch value is changed from 0 to something else. */
+          var availableSwitch = 0
+          while(availableSwitch == 0) {
+
+            /* If an available employee is matched with a vehicle, 'theval' will become false.
+               If 'theval' is false, it will not bother checking the rest of the employees as
+               a match has been found, and will effectively skip to the end of the loop. */
+            var theval:Boolean = true
+
+            /* Loop through all employees (this loop is repeated indefinitely while 'availableswitch'
+               equals 0, i.e. no employees are available). */
+            for (x <- 0 to eBuff.size - 1
+                 if(theval) == true) {
+
+              // Checks if the current employee is available.
+              eBuff(x).isAvailable == true match {
+                case true => // If available:
+
+                  // Set current employee availability to false.
+                  eBuff(x).isAvailable = false
+
+                  // Add the current vehicle to the employee's vehicle list.
+                  eBuff(x).addVehicle(vBuff(index))
+
+                  // Print out which employee is handling the current vehicle and the time the work started and ended.
+                  println("Employee " + eBuff(x).firstName + " " + eBuff(x).lastName + " is handling Vehicle " + vBuff(index).reg)
+                  println(
+                    "Time Started: "
+                    + (f"${
+                        eBuff(x).splitBuff.size == 1 match {
+                          case true => 0.0
+                          case false =>
+                            eBuff(x).splitBuff.size == 2 match {
+                              case true => eBuff(x).splitBuff(0).timeTaken
+                              case false =>
+                            var outTime: Double = 0.0
+                            for (a <- 0 to eBuff.size - 2) {
+                              outTime += eBuff(x).splitBuff(a).timeTaken
+                            }
+                            outTime
+                          }
+                        }
+                      }%.2f")
+                    + " hours.\nTime Finished: " + (f"${
+                      eBuff(x).splitBuff.size == 1 match {
+                        case true => eBuff(x).splitBuff(0).timeTaken
+                        case false =>
+                          var outTimeEnd:Double = 0.0
+                          for (a <- 0 to eBuff(x).splitBuff.size - 1)
+                          {
+                            outTimeEnd += eBuff(x).splitBuff(a).timeTaken
+                          }
+                          outTimeEnd
+                      }
+                    }%.2f" + " hours.")
+                  )
+
+                  // Print the cost of fixing the current vehicle.
+                  println(vBuff(index).costFix + "\n")
+
+                  // Call the function to make the employee work on a vehicle for a specific time.
+                  doTask(x)
+
+                  // Set 'theval' to false so the rest of the employees are skipped.
+                  theval = false
+
+                  /* The availability switch will change from 0 to 1 to prevent the entire employee
+                     list check running again. */
+                  availableSwitch += 1
+
+                  //
+
+                case false => // If the employee isn't available, skip to the next one.
+              }
+            }
+
+          }
+
+          // Calls the function again with the index + 1 (the index of the next Vehicle in the garage's vehicle list.)
+          vFix(index + 1)
       }
-    println("Total cost of repair for vehicle " + vIn.reg + ": £" + (f"${theBill}%.2f"))
 
   }
+
+  // Defines the sleep function.
+  def sleep(time:Long){Thread.sleep(time)}
+
+  // Gets the time taken for a specific employee's most recently added Vehicle to be repaired.
+  // The function simulates the time taken before the employee finishes this task and becomes available again.
+  def doTask(theEmp:Int): Unit =
+  {
+    val function = Future {
+      sleep(eBuff(theEmp).splitBuff.last.timeTaken.toLong)
+      eBuff(theEmp).isAvailable = true
+
+    }
+  }
+
 
   def calcBill(vID:String): Double =
   {
@@ -137,7 +236,11 @@ class Garage(var isOpen:Boolean)
               {
                 case true =>
                   for (y <- 0 to vBuff(x).pBuff.size - 1) {
-                    theCost += vBuff(x).pBuff(y).pCost
+                    vBuff(x).pBuff(y).isBroken == true match
+                    {
+                      case true => theCost += vBuff(x).pBuff(y).pCost
+                      case false =>
+                    }
                   }
 
                 case false => theCost += 0.0
@@ -188,20 +291,30 @@ class Garage(var isOpen:Boolean)
   def gOpen() =
   {
     isOpen = true
-    isOpen
-
 
     vBuff = vBuff.sortWith(_.queueCheck > _.queueCheck)
 
-    // (numBrokenParts( a.reg ))
 
+    vFix(0)
+
+    println("Total earnings for the day: £" + (f"${
+        var theTotal:Double = 0.0
+        for(x <- 0 to eBuff.size - 1)
+          {
+            for(y <- 0 to eBuff(x).splitBuff.size - 1)
+            {
+              theTotal += eBuff(x).splitBuff(y).costFix
+            }
+          }
+      theTotal
+      }%.2f")
+    )
 
   }
 
   def gClose() =
   {
     isOpen = false
-    isOpen
   }
 
   def timeTakenAll(): Double =
