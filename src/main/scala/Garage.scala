@@ -222,7 +222,7 @@ class Garage(var isOpen:Boolean)
     }
   }
 
-
+  // Calculates the total cost of repair for one Vehicle.
   def calcBill(vID:String): Double =
   {
     var theCost:Double = 0.0
